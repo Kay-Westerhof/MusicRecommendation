@@ -1,6 +1,6 @@
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
-from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.metrics.pairwise import cosine_similarity, euclidean_distances
 
 # Import dataset from file
 data = pd.read_csv('data/dataset.csv', decimal=',')
@@ -23,10 +23,20 @@ features_scaled = MinMaxScaler().fit_transform(features)
 # Combine numerical and categorical features
 complete_features = pd.concat([pd.DataFrame(features_scaled), categorical_features.reset_index(drop=True)], axis=1)
 
-# Calculate cosine similarity
-cosine_similarity = cosine_similarity(complete_features)
+def get_cosine_similarity():
+    # Calculate cosine similarity
+    return cosine_similarity(complete_features)
 
-def get_recommendation(track_name, cosine_sim=cosine_similarity, amount=5):
+
+def get_euclidean_similarity():
+    # Calculate euclidean distance
+    euclidean_dist = euclidean_distances(complete_features)
+    # Calculate euclidean similarity score
+    euclidean_similarity = 1 / (1 + euclidean_dist)
+    return euclidean_similarity
+
+
+def get_recommendation(track_name, similarity=get_cosine_similarity(), amount=5):
     song_index = data[data['track_name'] == track_name].index
 
     # Check if track exists in dataset
@@ -37,7 +47,7 @@ def get_recommendation(track_name, cosine_sim=cosine_similarity, amount=5):
     song_index = song_index[0]
 
     # Get similarity scores
-    similarity_socres = list(enumerate(cosine_sim[song_index]))
+    similarity_socres = list(enumerate(similarity[song_index]))
     similarity_socres = sorted(similarity_socres, key=lambda x: x[1], reverse=True)
 
     # Get the indices of the most similar tracks
@@ -47,4 +57,4 @@ def get_recommendation(track_name, cosine_sim=cosine_similarity, amount=5):
     return data[['track_name', 'track_artist']].iloc[track_indices]
 
 
-print(get_recommendation('Good Luck, Babe!'))
+print(get_recommendation('Good Luck, Babe!', get_cosine_similarity(), 20))
