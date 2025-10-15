@@ -1,9 +1,11 @@
 import pandas as pd
-from fastapi import FastAPI, Response
+from fastapi import FastAPI, Response, Request
+from fastapi.templating import Jinja2Templates
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics.pairwise import cosine_similarity, euclidean_distances
+from starlette.responses import HTMLResponse
 
-from Models.Similarity import Similarity
+from models.Similarity import Similarity
 
 # Import dataset from file
 data = pd.read_csv('data/dataset.csv', decimal=',')
@@ -61,7 +63,14 @@ def get_recommendation(track_name, similarity=get_cosine_similarity(), amount=5)
 
 app = FastAPI()
 
-@app.get("/", status_code=200)
+templates = Jinja2Templates(directory="templates")
+
+@app.get("/", response_class=HTMLResponse)
+def read_root(request: Request):
+    return templates.TemplateResponse(request=request, name = "index.html")
+
+
+@app.post("/recommend", status_code=200)
 def show_recommendation(title: str = "Good Luck, Babe!", amount: int = 5, similarity: int = Similarity.Cosine.value):
     if similarity == Similarity.Cosine.value:
         return get_recommendation(title, similarity=get_cosine_similarity(), amount=amount)
