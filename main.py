@@ -1,5 +1,5 @@
 import pandas as pd
-from fastapi import FastAPI, Response, Request
+from fastapi import FastAPI, Response, Request, Form
 from fastapi.templating import Jinja2Templates
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics.pairwise import cosine_similarity, euclidean_distances
@@ -71,7 +71,7 @@ def read_root(request: Request):
 
 
 @app.post("/recommend", status_code=200)
-def show_recommendation(title: str = "Good Luck, Babe!", amount: int = 5, similarity: int = Similarity.Cosine.value):
+def show_recommendation(title: str = Form(...), amount: int = Form(...), similarity: int = Form(...), request: Request = None):
     if similarity == Similarity.Cosine.value:
         return get_recommendation(title, similarity=get_cosine_similarity(), amount=amount)
     elif similarity == Similarity.Euclidean.value:
