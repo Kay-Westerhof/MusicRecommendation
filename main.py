@@ -1,6 +1,9 @@
 import pandas as pd
+from fastapi import FastAPI, Response
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics.pairwise import cosine_similarity, euclidean_distances
+
+from Models.Similarity import Similarity
 
 # Import dataset from file
 data = pd.read_csv('data/dataset.csv', decimal=',')
@@ -35,7 +38,6 @@ def get_euclidean_similarity():
     euclidean_similarity = 1 / (1 + euclidean_dist)
     return euclidean_similarity
 
-
 def get_recommendation(track_name, similarity=get_cosine_similarity(), amount=5):
     song_index = data[data['track_name'] == track_name].index
 
@@ -57,4 +59,17 @@ def get_recommendation(track_name, similarity=get_cosine_similarity(), amount=5)
     return data[['track_name', 'track_artist']].iloc[track_indices]
 
 
-print(get_recommendation('Good Luck, Babe!', get_cosine_similarity(), 20))
+app = FastAPI()
+
+@app.get("/", status_code=200)
+def show_recommendation(title: str = "Good Luck, Babe!", amount: int = 5, similarity: int = Similarity.Cosine.value):
+    if similarity == Similarity.Cosine.value:
+        return get_recommendation(title, similarity=get_cosine_similarity(), amount=amount)
+    elif similarity == Similarity.Euclidean.value:
+        return get_recommendation(title, similarity=get_euclidean_similarity(), amount=amount)
+    else:
+        return Response(status_code=400, content="Invalid similarity type")
+
+
+
+#print(get_recommendation('Good Luck, Babe!', get_cosine_similarity(), 20))
