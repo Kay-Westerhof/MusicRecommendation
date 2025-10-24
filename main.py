@@ -40,8 +40,8 @@ def get_euclidean_similarity():
     euclidean_similarity = 1 / (1 + euclidean_dist)
     return euclidean_similarity
 
-def get_recommendation(track_name, similarity=get_cosine_similarity(), amount=5):
-    song_index = data[data['track_name'] == track_name].index
+def get_recommendation(song_id, similarity=get_cosine_similarity(), amount=5):
+    song_index = data[data['song_id'] == song_id].index
 
     # Check if track exists in dataset
     if len(song_index) == 0:
@@ -71,11 +71,11 @@ def read_root(request: Request):
 
 
 @app.post("/recommend", status_code=200)
-def show_recommendation(title: str = Form(...), amount: int = Form(...), similarity: int = Form(...), request: Request = None):
+def show_recommendation(song_id: int = Form(...), amount: int = Form(...), similarity: int = Form(...), request: Request = None):
     if similarity == Similarity.Cosine.value:
-        return get_recommendation(title, similarity=get_cosine_similarity(), amount=amount)
+        return get_recommendation(song_id, similarity=get_cosine_similarity(), amount=amount)
     elif similarity == Similarity.Euclidean.value:
-        return get_recommendation(title, similarity=get_euclidean_similarity(), amount=amount)
+        return get_recommendation(song_id, similarity=get_euclidean_similarity(), amount=amount)
     else:
         return Response(status_code=400, content="Invalid similarity type")
 
