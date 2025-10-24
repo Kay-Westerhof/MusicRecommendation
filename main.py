@@ -73,9 +73,11 @@ def read_root(request: Request):
 @app.post("/recommend", status_code=200)
 def show_recommendation(song_id: int = Form(...), amount: int = Form(...), similarity: int = Form(...), request: Request = None):
     if similarity == Similarity.Cosine.value:
-        return get_recommendation(song_id, similarity=get_cosine_similarity(), amount=amount)
+        recommendations = get_recommendation(song_id, similarity=get_cosine_similarity(), amount=amount)
+        return templates.TemplateResponse(request=request, name="result.html", context={"recommendations": recommendations.to_dict('records')})
     elif similarity == Similarity.Euclidean.value:
-        return get_recommendation(song_id, similarity=get_euclidean_similarity(), amount=amount)
+        recommendations = get_recommendation(song_id, similarity=get_euclidean_similarity(), amount=amount)
+        return templates.TemplateResponse(request=request, name="result.html", context={"recommendations": recommendations.to_dict('records')})
     else:
         return Response(status_code=400, content="Invalid similarity type")
 
