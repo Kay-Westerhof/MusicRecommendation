@@ -12,8 +12,11 @@
 
         <form action="/recommend" method="post" class="w-50">
             <div class="mb-3 w-100">
-                <label for="song_id" class="form-label">Enter a song id:</label>
-                <input type="text" id="song_id" name="song_id" class="form-control" required>
+                <label for="song_search" class="form-label">Search for a song</label>
+                <input type="text" id="song_search" class="form-control" placeholder="Type song name..." autocomplete="off">
+                <input type="hidden" id="song_id" name="song_id" required>
+                <div id="search_results" class="list-group mt-2"></div>
+                <div id="selected_song" class="alert alert-info mt-2" style="display: none;"></div>
             </div>
 
             <div class="mb-3 w-100">
@@ -30,11 +33,61 @@
             </div>
 
             <div class="w-100">
-                <button type="submit" class="btn btn-primary w-100">Get Recommendations</button>
+                <button type="submit" class="btn btn-primary w-100" id="submit_btn" disabled>Get Recommendations</button>
             </div>
         </form>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+    <script>
+        const searchInput = document.getElementById('song_search');
+        const searchResults = document.getElementById('search_results');
+        const songIdInput = document.getElementById('song_id');
+        const selectedSongDiv = document.getElementById('selected_song');
+        const submitBtn = document.getElementById('submit_btn');
+
+        let debounceTimer;
+
+        searchInput.addEventListener('input', function() {
+            clearTimeout(debounceTimer);
+            const query = this.value.trim();
+
+            if (query.length < 2) {
+                searchResults.innerHTML = '';
+                return;
+            }
+
+            debounceTimer = setTimeout(() => {
+                fetch(`/search?query=${encodeURIComponent(query)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        searchResults.innerHTML = '';
+
+                        if (data.length === 0) {
+                            searchResults.innerHTML = '<div class="list-group-item">No songs found</div>';
+                            return;
+                        }
+
+                        data.forEach(song => {
+                            const item = document.createElement('button');
+                            item.type = 'button';
+                            item.className = 'list-group-item list-group-item-action';
+                            item.innerHTML = `<strong>${song.track_name}</strong><br><small class="text-muted">${song.track_artist}</small>`;
+                            item.onclick = () => selectSong(song.song_id, song.track_name, song.track_artist);
+                            searchResults.appendChild(item);
+                        });
+                    });
+            }, 300);
+        });
+
+        function selectSong(songId, trackName, trackArtist) {
+            songIdInput.value = songId;
+            selectedSongDiv.innerHTML = `Selected: <strong>${trackName}</strong> by ${trackArtist}`;
+            selectedSongDiv.style.display = 'block';
+            searchResults.innerHTML = '';
+            searchInput.value = '';
+            submitBtn.disabled = false;
+        }
+    </script>
 </body>
 </html>

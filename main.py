@@ -82,5 +82,17 @@ def show_recommendation(song_id: int = Form(...), amount: int = Form(...), simil
         return Response(status_code=400, content="Invalid similarity type")
 
 
+@app.get("/search")
+def search_songs(query: str):
+    if not query or len(query) < 2:
+        return []
+
+    matches = data[data['track_name'].str.contains(query, case=False, na=False)]
+    matches = matches.head(10)
+    results = matches[['song_id', 'track_name', 'track_artist']].to_dict('records')
+
+    return results
+
+
 
 #print(get_recommendation('Good Luck, Babe!', get_cosine_similarity(), 20))
