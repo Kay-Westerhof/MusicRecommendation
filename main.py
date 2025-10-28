@@ -11,13 +11,19 @@ from models.Similarity import Similarity
 # Import dataset from file
 data = pd.read_csv('data/dataset.csv', decimal=',')
 
-def get_features(include_artist=False):
+def get_features(excluded_features=None, excluded_categorical=None):
     # Select feature data
     feature_columns = ['energy', 'tempo', 'danceability', 'loudness', 'liveness', 'valence', 'speechiness', 'instrumentalness', 'key', 'acousticness']
-    categorical_columns = ['playlist_genre', 'playlist_subgenre']
 
-    if include_artist:
-        categorical_columns.append('track_artist')
+    # Remove excluded features
+    if excluded_features:
+        feature_columns = [f for f in feature_columns if f not in excluded_features]
+
+    categorical_columns = ['playlist_genre', 'playlist_subgenre', 'track_artist']
+
+    # Remove excluded categorical features
+    if excluded_categorical:
+        categorical_columns = [c for c in categorical_columns if c not in excluded_categorical]
 
     # Get only categorical columns from dataset
     categorical_data = data[categorical_columns]
@@ -34,6 +40,7 @@ def get_features(include_artist=False):
     complete_features = pd.concat([pd.DataFrame(features_scaled), categorical_features.reset_index(drop=True)], axis=1)
 
     return complete_features
+
 
 def get_cosine_similarity(features: DataFrame):
     # Calculate cosine similarity
@@ -82,12 +89,15 @@ def read_root(request: Request):
 
 
 @app.post("/recommend", status_code=200)
-def show_recommendation(song_id: int = Form(...), amount: int = Form(...), similarity: int = Form(...), include_artist: bool = Form(...), request: Request = None):
+def show_recommendation(song_id: int = Form(...), amount: int = Form(...), similarity: int = Form(...), excluded_features: str = Form(""), excluded_categorical: str = Form(""), request: Request = None):
+    excluded_list = [features.strip() for features in excluded_features.split(',') if features.strip()]
+    excluded_cat_list = [categorical_features.strip() for categorical_features in excluded_categorical.split(',') if categorical_features.strip()]
+
     if similarity == Similarity.Cosine.value:
-        recommendations = get_recommendation(song_id, similarity=get_cosine_similarity(get_features(include_artist)), amount=amount)
+        recommendations = get_recommendation(song_id, similarity=get_cosine_similarity(get_features(excluded_list, excluded_cat_list)), amount=amount)
         return templates.TemplateResponse(request=request, name="result.html", context={"recommendations": recommendations.to_dict('records')})
     elif similarity == Similarity.Euclidean.value:
-        recommendations = get_recommendation(song_id, similarity=get_euclidean_similarity(get_features(include_artist)), amount=amount)
+        recommendations = get_recommendation(song_id, similarity=get_euclidean_similarity(get_features(excluded_list, excluded_cat_list)), amount=amount)
         return templates.TemplateResponse(request=request, name="result.html", context={"recommendations": recommendations.to_dict('records')})
     else:
         return Response(status_code=400, content="Invalid similarity type")

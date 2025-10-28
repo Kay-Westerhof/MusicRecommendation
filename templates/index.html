@@ -33,10 +33,83 @@
             </div>
 
             <div class="mb-3 w-100">
-                <input type="hidden" name="include_artist" value="false">
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="include_artist" name="include_artist" value="true">
-                    <label class="form-check-label" for="include_artist">Include artist in features</label>
+                <div class="accordion" id="advancedAccordion">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#advancedOptions">
+                                Advanced Options
+                            </button>
+                        </h2>
+                        <div id="advancedOptions" class="accordion-collapse collapse" data-bs-parent="#advancedAccordion">
+                            <div class="accordion-body">
+                                <label class="form-label fw-bold">Categorical Features:</label>
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input categorical-checkbox" type="checkbox" id="categorical_playlist_genre" value="playlist_genre" checked>
+                                        <label class="form-check-label" for="categorical_playlist_genre">Playlist Genre</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input categorical-checkbox" type="checkbox" id="categorical_playlist_subgenre" value="playlist_subgenre" checked>
+                                        <label class="form-check-label" for="categorical_playlist_subgenre">Playlist Subgenre</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input categorical-checkbox" type="checkbox" id="categorical_track_artist" value="track_artist" checked>
+                                        <label class="form-check-label" for="categorical_track_artist">Track Artist</label>
+                                    </div>
+                                </div>
+
+                                <label class="form-label fw-bold">Numerical Features:</label>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input feature-checkbox" type="checkbox" id="feature_energy" value="energy" checked>
+                                            <label class="form-check-label" for="feature_energy">Energy</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input feature-checkbox" type="checkbox" id="feature_tempo" value="tempo" checked>
+                                            <label class="form-check-label" for="feature_tempo">Tempo</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input feature-checkbox" type="checkbox" id="feature_danceability" value="danceability" checked>
+                                            <label class="form-check-label" for="feature_danceability">Danceability</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input feature-checkbox" type="checkbox" id="feature_loudness" value="loudness" checked>
+                                            <label class="form-check-label" for="feature_loudness">Loudness</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input feature-checkbox" type="checkbox" id="feature_liveness" value="liveness" checked>
+                                            <label class="form-check-label" for="feature_liveness">Liveness</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input feature-checkbox" type="checkbox" id="feature_valence" value="valence" checked>
+                                            <label class="form-check-label" for="feature_valence">Valence</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input feature-checkbox" type="checkbox" id="feature_speechiness" value="speechiness" checked>
+                                            <label class="form-check-label" for="feature_speechiness">Speechiness</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input feature-checkbox" type="checkbox" id="feature_instrumentalness" value="instrumentalness" checked>
+                                            <label class="form-check-label" for="feature_instrumentalness">Instrumentalness</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input feature-checkbox" type="checkbox" id="feature_key" value="key" checked>
+                                            <label class="form-check-label" for="feature_key">Key</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input feature-checkbox" type="checkbox" id="feature_acousticness" value="acousticness" checked>
+                                            <label class="form-check-label" for="feature_acousticness">Acousticness</label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <input type="hidden" id="excluded_features" name="excluded_features" value="">
+                                <input type="hidden" id="excluded_categorical" name="excluded_categorical" value="">
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -96,6 +169,31 @@
             searchInput.value = '';
             submitBtn.disabled = false;
         }
+
+        const form = document.querySelector('form');
+        form.addEventListener('submit', function(e) {
+            const featureCheckboxes = document.querySelectorAll('.feature-checkbox');
+            const excludedFeatures = [];
+
+            featureCheckboxes.forEach(checkbox => {
+                if (!checkbox.checked) {
+                    excludedFeatures.push(checkbox.value);
+                }
+            });
+
+            document.getElementById('excluded_features').value = excludedFeatures.join(',');
+
+            const categoricalCheckboxes = document.querySelectorAll('.categorical-checkbox');
+            const excludedCategorical = [];
+
+            categoricalCheckboxes.forEach(checkbox => {
+                if (!checkbox.checked) {
+                    excludedCategorical.push(checkbox.value);
+                }
+            });
+
+            document.getElementById('excluded_categorical').value = excludedCategorical.join(',');
+        });
     </script>
 </body>
 </html>
