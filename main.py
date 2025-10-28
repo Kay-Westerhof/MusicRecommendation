@@ -1,6 +1,7 @@
 import pandas as pd
 from fastapi import FastAPI, Response, Request, Form
 from fastapi.templating import Jinja2Templates
+from pandas import DataFrame
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics.pairwise import cosine_similarity, euclidean_distances
 from starlette.responses import HTMLResponse
@@ -10,37 +11,43 @@ from models.Similarity import Similarity
 # Import dataset from file
 data = pd.read_csv('data/dataset.csv', decimal=',')
 
-# Select feature data
-feature_columns = ['energy', 'tempo', 'danceability', 'loudness', 'liveness', 'valence', 'speechiness', 'instrumentalness', 'key', 'acousticness']
-categorical_columns = ['playlist_genre', 'playlist_subgenre']
+def get_features(include_artist=False):
+    # Select feature data
+    feature_columns = ['energy', 'tempo', 'danceability', 'loudness', 'liveness', 'valence', 'speechiness', 'instrumentalness', 'key', 'acousticness']
+    categorical_columns = ['playlist_genre', 'playlist_subgenre']
 
-# Get only categorical columns from dataset
-categorical_data = data[categorical_columns]
+    if include_artist:
+        categorical_columns.append('track_artist')
 
-# One-hot encode categorical features
-categorical_features = pd.get_dummies(categorical_data, columns=categorical_columns)
+    # Get only categorical columns from dataset
+    categorical_data = data[categorical_columns]
 
-features = data[feature_columns]
+    # One-hot encode categorical features
+    categorical_features = pd.get_dummies(categorical_data, columns=categorical_columns)
 
-# Normalize feature data to prevent feature bias
-features_scaled = MinMaxScaler().fit_transform(features)
+    features = data[feature_columns]
 
-# Combine numerical and categorical features
-complete_features = pd.concat([pd.DataFrame(features_scaled), categorical_features.reset_index(drop=True)], axis=1)
+    # Normalize feature data to prevent feature bias
+    features_scaled = MinMaxScaler().fit_transform(features)
 
-def get_cosine_similarity():
+    # Combine numerical and categorical features
+    complete_features = pd.concat([pd.DataFrame(features_scaled), categorical_features.reset_index(drop=True)], axis=1)
+
+    return complete_features
+
+def get_cosine_similarity(features: DataFrame):
     # Calculate cosine similarity
-    return cosine_similarity(complete_features)
+    return cosine_similarity(features)
 
 
-def get_euclidean_similarity():
+def get_euclidean_similarity(features: DataFrame):
     # Calculate euclidean distance
-    euclidean_dist = euclidean_distances(complete_features)
+    euclidean_dist = euclidean_distances(features)
     # Calculate euclidean similarity score
     euclidean_similarity = 1 / (1 + euclidean_dist)
     return euclidean_similarity
 
-def get_recommendation(song_id, similarity=get_cosine_similarity(), amount=5):
+def get_recommendation(song_id, similarity=get_cosine_similarity(get_features()), amount=5):
     song_index = data[data['song_id'] == song_id].index
 
     # Check if track exists in dataset
@@ -75,12 +82,12 @@ def read_root(request: Request):
 
 
 @app.post("/recommend", status_code=200)
-def show_recommendation(song_id: int = Form(...), amount: int = Form(...), similarity: int = Form(...), request: Request = None):
+def show_recommendation(song_id: int = Form(...), amount: int = Form(...), similarity: int = Form(...), include_artist: bool = Form(...), request: Request = None):
     if similarity == Similarity.Cosine.value:
-        recommendations = get_recommendation(song_id, similarity=get_cosine_similarity(), amount=amount)
+        recommendations = get_recommendation(song_id, similarity=get_cosine_similarity(get_features(include_artist)), amount=amount)
         return templates.TemplateResponse(request=request, name="result.html", context={"recommendations": recommendations.to_dict('records')})
     elif similarity == Similarity.Euclidean.value:
-        recommendations = get_recommendation(song_id, similarity=get_euclidean_similarity(), amount=amount)
+        recommendations = get_recommendation(song_id, similarity=get_euclidean_similarity(get_features(include_artist)), amount=amount)
         return templates.TemplateResponse(request=request, name="result.html", context={"recommendations": recommendations.to_dict('records')})
     else:
         return Response(status_code=400, content="Invalid similarity type")
