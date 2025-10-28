@@ -51,14 +51,18 @@ def get_recommendation(song_id, similarity=get_cosine_similarity(), amount=5):
     song_index = song_index[0]
 
     # Get similarity scores
-    similarity_socres = list(enumerate(similarity[song_index]))
-    similarity_socres = sorted(similarity_socres, key=lambda x: x[1], reverse=True)
+    similarity_scores = list(enumerate(similarity[song_index]))
+    similarity_scores = sorted(similarity_scores, key=lambda x: x[1], reverse=True)
 
     # Get the indices of the most similar tracks
-    similarity_socres = similarity_socres[1:amount+1]
-    track_indices = [i[0] for i in similarity_socres]
+    similarity_scores = similarity_scores[1:amount+1]
+    track_indices = [i[0] for i in similarity_scores]
+    scores = [i[1] for i in similarity_scores]
 
-    return data[['track_name', 'track_artist']].iloc[track_indices]
+    result = data[['track_name', 'track_artist']].iloc[track_indices].copy()
+    result['similarity_score'] = scores
+
+    return result
 
 
 app = FastAPI()

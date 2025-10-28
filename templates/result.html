@@ -15,6 +15,7 @@
         <tr>
             <th scope="col">Title</th>
             <th scope="col">Artist</th>
+            <th scope="col">Similarity Score</th>
         </tr>
         </thead>
         <tbody>
@@ -22,6 +23,7 @@
             <tr>
                 <td>{{ song['track_name'] }}</td>
                 <td>{{ song['track_artist'] }}</td>
+                <td>{{ "%.4f"|format(song['similarity_score']) }}</td>
             </tr>
         {% endfor %}
         </tbody>
