@@ -25,19 +25,22 @@ def get_features(excluded_features=None, excluded_categorical=None):
     if excluded_categorical:
         categorical_columns = [c for c in categorical_columns if c not in excluded_categorical]
 
-    # Get only categorical columns from dataset
-    categorical_data = data[categorical_columns]
-
-    # One-hot encode categorical features
-    categorical_features = pd.get_dummies(categorical_data, columns=categorical_columns)
-
     features = data[feature_columns]
 
     # Normalize feature data to prevent feature bias
     features_scaled = MinMaxScaler().fit_transform(features)
 
-    # Combine numerical and categorical features
-    complete_features = pd.concat([pd.DataFrame(features_scaled), categorical_features.reset_index(drop=True)], axis=1)
+    if len(categorical_columns) > 0:
+        # Get only categorical columns from dataset
+        categorical_data = data[categorical_columns]
+        # One-hot encode categorical features
+        categorical_features = pd.get_dummies(categorical_data, columns=categorical_columns)
+        # Combine numerical and categorical features
+        complete_features = pd.concat([pd.DataFrame(features_scaled), categorical_features.reset_index(drop=True)],
+                                      axis=1)
+    else:
+        # All categorical features are excluded
+        complete_features = features_scaled
 
     return complete_features
 
